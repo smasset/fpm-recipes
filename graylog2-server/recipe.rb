@@ -15,25 +15,27 @@ class Graylog2Server < FPM::Cookery::Recipe
 
   depends     'java-runtime-headless'
 
-  config_files '/etc/graylog2.conf elasticsearch.yml.example'
+  config_files '/etc/graylog2-server/graylog2.conf',
+               '/etc/graylog2-server/elasticsearch.yml'
 
   def build
     inline_replace 'bin/graylog2ctl' do |s|
       s.gsub! 'GRAYLOG2_SERVER_JAR=graylog2-server.jar', 'GRAYLOG2_SERVER_JAR=' + share('graylog2-server/graylog2-server.jar')
-      s.gsub! 'LOG_FILE=log/graylog2-server.log', 'LOG_FILE=' + var('log/graylog2-server.log')
+      s.gsub! 'GRAYLOG2_CONF=/etc/graylog2.conf', 'GRAYLOG2_CONF=' + etc('graylog2-server/graylog2.conf')
+      s.gsub! 'GRAYLOG2_PID=/tmp/graylog2.pid', 'GRAYLOG2_PID=' + var('run/graylog2-server.pid')
+      s.gsub! 'LOG_FILE=log/graylog2-server.log', 'LOG_FILE=' + var('log/graylog2-server/graylog2-server.log')
     end
 
     inline_replace 'graylog2.conf.example' do |s|
-      s.gsub! 'mongodb_useauth = true', 'mongodb_useauth = false'
-      s.gsub! 'mongodb_host = localhost', 'mongodb_host = 127.0.0.1'
+      s.gsub! '/etc/graylog2-elasticsearch.yml', etc('graylog2-server/elasticsearch.yml')
     end
   end
 
   def install
-    bin.install 'bin/graylog2ctl'
-    etc('init').install_p workdir('graylog2-server.upstart'), 'graylog2-server.conf'
-    etc.install_p 'graylog2.conf.example', 'graylog2.conf'
-    etc.install_p 'elasticsearch.yml.example', 'graylog2-elasticsearch.yml'
+    etc('init.d').install_p 'bin/graylog2ctl', 'graylog2-server'
+    etc('graylog2-server').install_p 'graylog2.conf.example', 'graylog2.conf'
+    etc('graylog2-server').install_p 'elasticsearch.yml.example', 'elasticsearch.yml'
+
     share('graylog2-server').install workdir('COPYING')
     share('graylog2-server').install workdir('README')
     share('graylog2-server').install 'build_date'
