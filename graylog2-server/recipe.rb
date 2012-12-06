@@ -30,6 +30,7 @@ class Graylog2Server < FPM::Cookery::Recipe
       s.gsub! 'GRAYLOG2_CONF=/etc/graylog2.conf', 'GRAYLOG2_CONF=' + etc('graylog2-server/graylog2.conf')
       s.gsub! 'GRAYLOG2_PID=/tmp/graylog2.pid', 'GRAYLOG2_PID=' + var('run/graylog2-server.pid')
       s.gsub! 'LOG_FILE=log/graylog2-server.log', 'LOG_FILE=' + var('log/graylog2-server/graylog2-server.log')
+      s.gsub! '$NOHUP java -jar ${GRAYLOG2_SERVER_JAR} -f ${GRAYLOG2_CONF} -p ${GRAYLOG2_PID} >> ${LOG_FILE} &', '$NOHUP java -jar ${GRAYLOG2_SERVER_JAR} -f ${GRAYLOG2_CONF} -p ${GRAYLOG2_PID} >> ${LOG_FILE} 2>&1 &'
     end
 
     inline_replace 'graylog2.conf.example' do |s|
