@@ -1,0 +1,66 @@
+#!/bin/sh
+# postinst script for graylog2-server
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+
+case "${1}" in
+    configure)
+    [ -f /etc/default/graylog2-server ] && . /etc/default/graylog2-server
+
+    [ -z "${GRAYLOG2_USER}" ] && GRAYLOG2_USER="graylog2-server"
+    [ -z "${GRAYLOG2_GROUP}" ] && GRAYLOG2_GROUP="graylog2-server"
+    if ! getent group "${GRAYLOG2_GROUP}" > /dev/null 2>&1 ; then
+        addgroup --system "${GRAYLOG2_GROUP}" --quiet
+    fi
+    if ! id ${GRAYLOG2_USER} > /dev/null 2>&1 ; then
+        adduser --system --home /usr/share/graylog2-server --no-create-home \
+        --ingroup "${GRAYLOG2_GROUP}" --disabled-password --shell /bin/false \
+        "${GRAYLOG2_USER}"
+    fi
+
+    # Set user permissions on /var/log/graylog2-server
+    [ -z "${LOG_DIR}" ] && LOG_DIR="/var/log/graylog2-server"
+    mkdir -p "${LOG_DIR}"
+    chown -R "${GRAYLOG2_USER}:${GRAYLOG2_GROUP}" "${LOG_DIR}"
+    chmod 755 "${LOG_DIR}"
+
+    # configuration files should not be modifiable by graylog2-server user, as this can be a security issue
+    [ -z "${CONF_DIR}" ] && CONF_DIR="/etc/graylog2-server"
+    chown -Rh 'root:root' "${CONF_DIR}"
+    chmod 755 "${CONF_DIR}"/*
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "${0} called with unknown argument \`${1}'" >&2
+        exit 1
+    ;;
+esac
+
+if [ -x "/etc/init.d/graylog2-server" ]; then
+    update-rc.d graylog2-server defaults 95 10 >/dev/null
+    if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+        invoke-rc.d graylog2-server start || true
+    else
+        /etc/init.d/graylog2-server start || true
+    fi
+fi
+
+exit 0

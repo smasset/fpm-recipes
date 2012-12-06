@@ -1,0 +1,38 @@
+#!/bin/sh
+# preinst script for graylog2-server
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <new-preinst> `install'
+#        * <new-preinst> `install' <old-version>
+#        * <new-preinst> `upgrade' <old-version>
+#        * <old-preinst> `abort-upgrade' <new-version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+
+case "${1}" in
+    install|upgrade)
+    ;;
+
+    abort-upgrade)
+    ;;
+
+    *)
+        echo "${0} called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+if [ -x "/etc/init.d/graylog2-server" ]; then
+    if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+        invoke-rc.d graylog2-server stop || true
+    else
+        /etc/init.d/graylog2-server stop || true
+    fi
+fi
+
+exit 0

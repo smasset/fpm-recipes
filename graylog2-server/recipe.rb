@@ -18,6 +18,12 @@ class Graylog2Server < FPM::Cookery::Recipe
   config_files '/etc/graylog2-server/graylog2.conf',
                '/etc/graylog2-server/elasticsearch.yml'
 
+  pre_install    'preinst'
+  post_install   'postinst'
+
+  pre_uninstall  'prerm'
+  post_uninstall 'postrm'
+
   def build
     inline_replace 'bin/graylog2ctl' do |s|
       s.gsub! 'GRAYLOG2_SERVER_JAR=graylog2-server.jar', 'GRAYLOG2_SERVER_JAR=' + share('graylog2-server/graylog2-server.jar')
