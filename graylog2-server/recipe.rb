@@ -26,6 +26,7 @@ class Graylog2Server < FPM::Cookery::Recipe
 
   def build
     inline_replace 'bin/graylog2ctl' do |s|
+      s.gsub! '#!/bin/bash', '#!/bin/sh'
       s.gsub! 'GRAYLOG2_SERVER_JAR=graylog2-server.jar', 'GRAYLOG2_SERVER_JAR=' + share('graylog2-server/graylog2-server.jar')
       s.gsub! 'GRAYLOG2_CONF=/etc/graylog2.conf', 'GRAYLOG2_CONF=' + etc('graylog2-server/graylog2.conf')
       s.gsub! 'GRAYLOG2_PID=/tmp/graylog2.pid', 'GRAYLOG2_PID=' + var('run/graylog2-server.pid')
